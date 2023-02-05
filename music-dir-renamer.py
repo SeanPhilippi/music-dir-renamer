@@ -44,7 +44,6 @@ def music_dir_renamer():
                 # / can't be in a folder or file name
                 new_dirname = f"{artist} - {album}{year}".replace("/", "|")
                 new_dirpath = os.path.join(os.path.dirname(dirpath), new_dirname)
-                print("--dirpath", dirpath)
                 try:
                     if not os.path.exists(new_dirpath):
                           os.rename(dirpath, new_dirpath)
