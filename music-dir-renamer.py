@@ -41,8 +41,13 @@ def music_dir_renamer():
                     year = f" ({audiofile.tag.getBestDate().year})"
                 except:
                     year = ""
-                # / can't be in a folder or file name
-                new_dirname = f"{artist} - {album}{year}".replace("/", "-").replace("|", "-")
+                # replace all invalid characters in filenames with '-'
+                invalid_chars = "/|:\""
+                replace_chars = "-"
+
+                translator = str.maketrans(invalid_chars, replace_chars * len(invalid_chars))
+
+                new_dirname = f"{artist} - {album}{year}".translate(translator)
                 new_dirpath = os.path.join(os.path.dirname(dirpath), new_dirname)
                 try:
                     if not os.path.exists(new_dirpath):
