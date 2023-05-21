@@ -7,6 +7,7 @@ from path import Path
 MUSIC_PATH = os.environ["MUSIC_PATH"]
 music_dir = Path(MUSIC_PATH)
 # music_dir = Path("/home/kesto/Test")
+# music_dir = Path("/media/kesto/My Passport/MUSIC")
 
 def music_dir_renamer():
     for dirpath, dirnames, files in os.walk(music_dir):
@@ -41,7 +42,7 @@ def music_dir_renamer():
                 except:
                     year = ""
                 # / can't be in a folder or file name
-                new_dirname = f"{artist} - {album}{year}".replace("/", "|")
+                new_dirname = f"{artist} - {album}{year}".replace("/", "-").replace("|", "-")
                 new_dirpath = os.path.join(os.path.dirname(dirpath), new_dirname)
                 try:
                     if not os.path.exists(new_dirpath):
