@@ -12,8 +12,9 @@ music_dir = Path(MUSIC_PATH)
 def music_dir_renamer():
     for dirpath, dirnames, files in os.walk(music_dir):
         for filename in files:
-            if filename.endswith(".mp3"):
-                filepath = os.path.join(dirpath, filename)
+            if filename.endswith(".mp3") and "INCOMPLETE" not in filename:
+                filepath = Path(dirpath) / filename
+                print(f"==filepath {filepath}")
                 audiofile = eyed3.load(filepath)
                 try:
                     if audiofile.tag.artist is not None:
@@ -48,9 +49,10 @@ def music_dir_renamer():
                 translator = str.maketrans(invalid_chars, replace_chars * len(invalid_chars))
 
                 new_dirname = f"{artist} - {album}{year}".translate(translator)
-                new_dirpath = os.path.join(os.path.dirname(dirpath), new_dirname)
+                new_dirpath = Path(Path(dirpath).parent) / new_dirname
+                # new_dirpath = os.path.join(os.path.dirname(dirpath), new_dirname)
                 try:
-                    if not os.path.exists(new_dirpath):
+                    if not Path(new_dirpath).exists():
                           os.rename(dirpath, new_dirpath)
                 except:
                     print("==dirpath", dirpath)
@@ -58,5 +60,7 @@ def music_dir_renamer():
                     print("!!! Error when trying to find path or rename")
                     continue
                 break
+            elif "INCOMPLETE" in filename:
+                print("!!! Skipped because incomplete file")
 
 music_dir_renamer()                    
