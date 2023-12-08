@@ -50,7 +50,7 @@ def music_dir_renamer():
 
                 new_dirname = f"{artist} - {album}{year}".translate(translator)
                 new_dirpath = Path(Path(dirpath).parent) / new_dirname
-                # new_dirpath = os.path.join(os.path.dirname(dirpath), new_dirname)
+
                 try:
                     if not Path(new_dirpath).exists():
                           os.rename(dirpath, new_dirpath)
