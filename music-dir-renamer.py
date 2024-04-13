@@ -50,7 +50,6 @@ def music_dir_renamer():
     dir_files_dict = {}
     for dirpath, dirnames, files in os.walk(music_dir):
         path = Path(dirpath)
-        new_dirpath = None
         if path != music_dir:
             for filename in files:
                 if filename.endswith(".mp3") and "INCOMPLETE" not in filename:
@@ -59,6 +58,7 @@ def music_dir_renamer():
                     audiofile = eyed3.load(filepath)
                     new_dirname = rename_using_schema(audiofile)
                     if new_dirname is not None:
+                        # start renaming using new directory path
                         new_dirpath = Path(Path(dirpath).parent) / new_dirname
                         try:
                             if not Path(new_dirpath).exists():
@@ -79,32 +79,22 @@ def music_dir_renamer():
             for filename in files:
                 if filename.endswith(".mp3") and "INCOMPLETE" not in filename:
                     filepath = path / filename
-                    print(f"==filepath for top level: {filepath}")
                     audiofile = eyed3.load(filepath)
                     new_dirname = rename_using_schema(audiofile)
                     if new_dirname is not None:
                         new_dirpath = music_dir / new_dirname
                         if new_dirpath in dir_files_dict:
                             dir_files_dict[new_dirpath].append(filepath)
-                            print(f'--after append {dir_files_dict}')
                         else:
                             dir_files_dict[new_dirpath] = [filepath]
-                            print(f'--after add key {dir_files_dict}')
                     else:
                         print("!!! Skipped because could not create new directory name with metadata")
 
                 elif "INCOMPLETE" in filename:
                     print("!!! Skipped because incomplete file")
 
-        if new_dirpath is None:
-            print("!!! Skipped because new_dirpath was None")
-            continue
-        # start renaming using new directory path
-
-    print(f'REEEEEE {dir_files_dict}')
     # loop through the dictionary made for stand-alone files at the top level of music_dir
     for new_dirpath, filepaths in dir_files_dict.items():
-        print("==in top level loop")
         try:
             # create a new directory for the files
             if not new_dirpath.exists():
@@ -112,8 +102,7 @@ def music_dir_renamer():
             for filepath in filepaths:
                 # move the files to the new directory
                 filepath.rename(new_dirpath / filepath.name)
-        except OSError as e:
-            print(f"OSError {e}")
+        except:
             print(f"!!! Error when trying to create directory or move file for {new_dirpath}")
 
 music_dir_renamer()
