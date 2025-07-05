@@ -3,6 +3,22 @@
 import os
 import eyed3
 from path import Path
+import argparse
+import logging
+
+parser = argparse.ArgumentParser(description="Rename music directories to match a schema based on metadata")
+parser.add_argument("--force", action="store_true", help="Process all folders, ignoring .renamed_by_script tags")
+args = parser.parse_args()
+
+# setup logging
+logging.basicConfig(
+    logging.INFO,
+    format="%(asctime)s - %(message)s"
+    handlers=[
+        logging.FileHandler("music-dir-renamer-log.txt"),
+        logging.StreamHandler()
+    ]
+)
 
 MUSIC_PATH = os.environ["MUSIC_PATH"]
 # music_dir = Path(MUSIC_PATH)
@@ -16,11 +32,11 @@ def rename_using_schema(audiofile, dir_path):
         if audiofile.tag.artist is not None:
             artist = audiofile.tag.artist
         else:
-            print("!!! Skipped because artist was None")
+            logging.warning("!!! Skipped because artist was None")
             problematic_dirs.append(dir_path)
             return
     except Exception as e:
-        print(f"!!! error when trying to get artist: {e}")
+        logging.error(f"!!! error when trying to get artist: {e}")
         # pass here because we don't want to rename if this is missing
         # will probably make the folder name even worse
         problematic_dirs.append(dir_path)
@@ -29,11 +45,11 @@ def rename_using_schema(audiofile, dir_path):
         if audiofile.tag.album is not None:
             album = audiofile.tag.album
         else:
-            print("!!! Skipped because album was None")
+            logging.warning("!!! Skipped because album was None")
             problematic_dirs.append(dir_path)
             return
     except Exception as e:
-        print(f"!!! error when trying to get album: {e}")
+        logging.error(f"!!! error when trying to get album: {e}")
         # pass here because we don't want to rename if this is missing
         # will probably make the folder name even worse
         problematic_dirs.append(dir_path)
@@ -41,7 +57,7 @@ def rename_using_schema(audiofile, dir_path):
     try:
         year = f" ({audiofile.tag.getBestDate().year})"
     except Exception as e:
-        print(f"!!! error trying to extract the year: {e}")
+        logging.error(f"!!! error trying to extract the year: {e}")
         year = ""
     # replace all invalid characters in filenames with '-'
     invalid_chars = "/|:\""
@@ -61,7 +77,7 @@ def music_dir_renamer():
             for filename in files:
                 if filename.endswith(".mp3") and "INCOMPLETE" not in filename:
                     filepath = path / filename
-                    print(f"==filepath: {filepath}")
+                    logging.info(f"==filepath: {filepath}")
                     audiofile = eyed3.load(filepath)
                     new_dirname = rename_using_schema(audiofile, filename)
                     if new_dirname is not None:
@@ -71,22 +87,22 @@ def music_dir_renamer():
                             if not Path(new_dirpath).exists():
                                 os.rename(dirpath, new_dirpath)
                         except Exception as e:
-                            print("==dirpath", repr(dirpath))
-                            print("==new_dirpath", repr(new_dirpath))
-                            print(f"!!! Error when trying to find path or rename: {e}")
+                            logging.info("==dirpath", repr(dirpath))
+                            logging.info("==new_dirpath", repr(new_dirpath))
+                            logging.error(f"!!! Error when trying to find path or rename: {e}")
                             continue
                     else:
-                        print("!!! Skipped because could not create new directory name with metadata")
+                        logging.warning("!!! Skipped because could not create new directory name with metadata")
                     break
 
                 elif "INCOMPLETE" in filename:
-                    print(f"!!! Skipped {filename} because incomplete file")
+                    logging.warning(f"!!! Skipped {filename} because incomplete file")
 
         else: # if it's a file within top most directory (usually Music)
             for filename in files:
                 if filename.endswith(".mp3") and "INCOMPLETE" not in filename:
                     filepath = path / filename
-                    print(f"==filepath: {filepath}")
+                    logging.info(f"==filepath of file used for metadata needed for dir name: {filepath}")
                     audiofile = eyed3.load(filepath)
                     new_dirname = rename_using_schema(audiofile, filename)
                     if new_dirname is not None:
@@ -96,10 +112,10 @@ def music_dir_renamer():
                         else:
                             dir_files_dict[new_dirpath] = [filepath]
                     else:
-                        print("!!! Skipped because could not create new directory name with metadata")
+                        logging.warning("!!! Skipped because could not create new directory name with metadata")
 
                 elif "INCOMPLETE" in filename:
-                    print("!!! Skipped because incomplete file")
+                    logging.warning("!!! Skipped because incomplete file")
 
     # loop through the dictionary made for stand-alone files at the top level of music_dir
     for new_dirpath, filepaths in dir_files_dict.items():
@@ -111,13 +127,13 @@ def music_dir_renamer():
                 # move the files to the new directory
                 filepath.rename(new_dirpath / filepath.name)
         except Exception as e:
-            print(f"!!! Error when trying to create directory or move file for {new_dirpath}: {e}")
+            logging.error(f"!!! Error when trying to create directory or move file for {new_dirpath}: {e}")
 
     if problematic_dirs:
-        print("problematic files and folders:")
+        logging.info("problematic files and folders:")
         for dir_path in problematic_dirs:
-            print(dir_path)
+            logging.info(dir_path)
     else:
-        print("No problematic folders!")
+        logging.info("No problematic folders!")
 
 music_dir_renamer()
