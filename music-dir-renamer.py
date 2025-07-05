@@ -7,13 +7,13 @@ import argparse
 import logging
 
 parser = argparse.ArgumentParser(description="Rename music directories to match a schema based on metadata")
-parser.add_argument("--force", action="store_true", help="Process all folders, ignoring .renamed_by_script tags")
+parser.add_argument("-f", "--force", action="store_true", help="Process all folders, ignoring .renamed_by_script tags")
 args = parser.parse_args()
 
 # setup logging
 logging.basicConfig(
     logging.INFO,
-    format="%(asctime)s - %(message)s"
+    format="%(asctime)s: %(message)s"
     handlers=[
         logging.FileHandler("music-dir-renamer-log.txt"),
         logging.StreamHandler()
