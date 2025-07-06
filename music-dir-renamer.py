@@ -12,11 +12,11 @@ args = parser.parse_args()
 
 # setup logging
 logging.basicConfig(
-    logging.INFO,
-    format="%(asctime)s: %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s: %(message)s",
     handlers=[
-        logging.FileHandler("music-dir-renamer-log.txt"),
-        logging.StreamHandler()
+        logging.FileHandler("music-dir-renamer-log.txt"), # handle saving of log messages to this file
+        logging.StreamHandler() # handle printing of log messages
     ]
 )
 
@@ -26,6 +26,13 @@ music_dir = Path("/home/kesto/Test")
 # music_dir = Path("/media/kesto/My Passport/MUSIC")
 
 problematic_dirs = []
+TAG_FILE = ".renamed_by_script"
+
+
+def is_processed_folder(dirpath):
+    """Check if a folder has been processed, unless --force is used."""
+    return not args.force and (Path(dirpath) / TAG_FILE).exists()
+
 
 def rename_using_schema(audiofile, dir_path):
     try:
@@ -73,6 +80,8 @@ def music_dir_renamer():
     dir_files_dict = {}
     for dirpath, dirnames, files in os.walk(music_dir):
         path = Path(dirpath)
+        if path != music_dir and is_processed_folder(dirpath):
+            continue
         if path != music_dir:
             for filename in files:
                 if filename.endswith(".mp3") and "INCOMPLETE" not in filename:
@@ -86,9 +95,11 @@ def music_dir_renamer():
                         try:
                             if not Path(new_dirpath).exists():
                                 os.rename(dirpath, new_dirpath)
+                                # add hidden tag file so it's known the dir has been renamed
+                                (Path(new_dirpath) / TAG_FILE).touch()
                         except Exception as e:
-                            logging.info("==dirpath", repr(dirpath))
-                            logging.info("==new_dirpath", repr(new_dirpath))
+                            logging.error(f"==dirpath {repr(dirpath)}")
+                            logging.error(f"==new_dirpath {repr(new_dirpath)}")
                             logging.error(f"!!! Error when trying to find path or rename: {e}")
                             continue
                     else:
@@ -126,6 +137,8 @@ def music_dir_renamer():
             for filepath in filepaths:
                 # move the files to the new directory
                 filepath.rename(new_dirpath / filepath.name)
+            # add hidden tag file so it's known the dir has been renamed
+            (Path(new_dirpath) / TAG_FILE).touch()
         except Exception as e:
             logging.error(f"!!! Error when trying to create directory or move file for {new_dirpath}: {e}")
 
